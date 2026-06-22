@@ -207,16 +207,18 @@
         let playerTurn = true;
 
         // AI Hunt/Target mode
-        let aiHits = [];
-        let aiTargets = [];
+        let huntMode = true;
+        let originHit = null; // { row, col }
+        let triedDirections = []; // Array of direction strings: 'up', 'down', 'left', 'right'
+        let currentDirection = null; // Current direction being fired
+        let currentPosition = null; // Current position to fire from
 
         function initGame() {
             playerBoard = createEmptyBoard();
             aiBoard = createEmptyBoard();
             playerShips = [];
             aiShips = [];
-            aiHits = [];
-            aiTargets = [];
+            resetAITargeting();
             gameOver = false;
             playerTurn = true;
 
@@ -347,7 +349,7 @@
             cell.hit = true;
             
             if (cell.ship) {
-                checkSunk(cell.ship);
+                checkSunk(cell.ship, aiBoard);
                 document.getElementById('gameStatus').textContent = 'Hit! AI\'s turn...';
             } else {
                 document.getElementById('gameStatus').textContent = 'Miss! AI\'s turn...';
@@ -372,52 +374,86 @@
             
             let row, col;
             
-            if (aiTargets.length > 0) {
-                const target = aiTargets.shift();
-                row = target.row;
-                col = target.col;
-            } else if (aiHits.length > 0) {
-                const lastHit = aiHits[aiHits.length - 1];
-                const adjacent = getAdjacentCells(lastHit.row, lastHit.col);
-                const validTargets = adjacent.filter(c => 
-                    c.row >= 0 && c.row < GRID_SIZE && 
-                    c.col >= 0 && c.col < GRID_SIZE && 
-                    !playerBoard[c.row][c.col].hit
-                );
-                
-                if (validTargets.length > 0) {
-                    const randomTarget = validTargets[Math.floor(Math.random() * validTargets.length)];
-                    row = randomTarget.row;
-                    col = randomTarget.col;
-                } else {
-                    aiHits = [];
-                    const randomCell = getRandomUnhitCell();
-                    row = randomCell.row;
-                    col = randomCell.col;
-                }
-            } else {
+            if (huntMode) {
+                // Hunt mode: fire at random unshot cells
                 const randomCell = getRandomUnhitCell();
                 row = randomCell.row;
                 col = randomCell.col;
+            } else {
+                // Target mode
+                if (!currentDirection) {
+                    // Pick a new direction that hasn't been tried
+                    const directions = ['up', 'down', 'left', 'right'];
+                    const untried = directions.filter(d => !triedDirections.includes(d));
+                    
+                    if (untried.length === 0) {
+                        // All directions exhausted, return to hunt mode
+                        resetAITargeting();
+                        const randomCell = getRandomUnhitCell();
+                        row = randomCell.row;
+                        col = randomCell.col;
+                    } else {
+                        // Pick a random untried direction
+                        currentDirection = untried[Math.floor(Math.random() * untried.length)];
+                        currentPosition = { ...originHit };
+                        const nextPos = getNextPosition(currentPosition, currentDirection);
+                        
+                        if (nextPos && !playerBoard[nextPos.row][nextPos.col].hit) {
+                            row = nextPos.row;
+                            col = nextPos.col;
+                        } else {
+                            // Direction blocked or boundary, mark as exhausted
+                            triedDirections.push(currentDirection);
+                            currentDirection = null;
+                            currentPosition = null;
+                            // Try again with next direction
+                            return aiTurn();
+                        }
+                    }
+                } else {
+                    // Continue in current direction
+                    const nextPos = getNextPosition(currentPosition, currentDirection);
+                    
+                    if (nextPos && !playerBoard[nextPos.row][nextPos.col].hit) {
+                        row = nextPos.row;
+                        col = nextPos.col;
+                    } else {
+                        // Hit boundary or already hit, mark direction as exhausted
+                        triedDirections.push(currentDirection);
+                        currentDirection = null;
+                        currentPosition = null;
+                        // Try again with next direction
+                        return aiTurn();
+                    }
+                }
             }
             
             const cell = playerBoard[row][col];
             cell.hit = true;
             
             if (cell.ship) {
-                aiHits.push({ row, col });
-                const adjacent = getAdjacentCells(row, col);
-                adjacent.forEach(c => {
-                    if (c.row >= 0 && c.row < GRID_SIZE && 
-                        c.col >= 0 && c.col < GRID_SIZE && 
-                        !playerBoard[c.row][c.col].hit) {
-                        aiTargets.push(c);
-                    }
-                });
-                checkSunk(cell.ship);
+                if (huntMode) {
+                    // First hit, switch to target mode
+                    originHit = { row, col };
+                    currentPosition = { row, col };
+                    huntMode = false;
+                    triedDirections = [];
+                    currentDirection = null;
+                } else {
+                    // Hit in target mode, continue in same direction
+                    currentPosition = { row, col };
+                }
+                
+                checkSunk(cell.ship, playerBoard);
                 document.getElementById('gameStatus').textContent = 'AI hit your ship! Your turn.';
             } else {
                 document.getElementById('gameStatus').textContent = 'AI missed! Your turn.';
+                // Miss in target mode, mark direction as exhausted
+                if (!huntMode && currentDirection) {
+                    triedDirections.push(currentDirection);
+                    currentDirection = null;
+                    currentPosition = { ...originHit };
+                }
             }
             
             renderBoard('playerGrid', playerBoard, false);
@@ -431,6 +467,42 @@
             }
             
             playerTurn = true;
+        }
+        
+        function getNextPosition(pos, direction) {
+            let newRow = pos.row;
+            let newCol = pos.col;
+            
+            switch (direction) {
+                case 'up':
+                    newRow = pos.row - 1;
+                    break;
+                case 'down':
+                    newRow = pos.row + 1;
+                    break;
+                case 'left':
+                    newCol = pos.col - 1;
+                    break;
+                case 'right':
+                    newCol = pos.col + 1;
+                    break;
+            }
+            
+            // Check if within bounds
+            if (newRow >= 0 && newRow < GRID_SIZE && newCol >= 0 && newCol < GRID_SIZE) {
+                return { row: newRow, col: newCol };
+            }
+            
+            return null;
+        }
+        
+        
+        function resetAITargeting() {
+            huntMode = true;
+            originHit = null;
+            triedDirections = [];
+            currentDirection = null;
+            currentPosition = null;
         }
 
         function getRandomUnhitCell() {
@@ -451,12 +523,12 @@
             ];
         }
 
-        function checkSunk(ship) {
-            const allHit = ship.cells.every(c => playerBoard[c.row][c.col].hit || aiBoard[c.row][c.col].hit);
+        function checkSunk(ship, board) {
+            const allHit = ship.cells.every(c => board[c.row][c.col].hit);
             if (allHit) {
                 ship.sunk = true;
-                // Remove from AI targets if it was tracking this ship
-                aiHits = aiHits.filter(h => !ship.cells.some(c => c.row === h.row && c.col === h.col));
+                // Reset AI targeting to hunt mode when a ship is sunk
+                resetAITargeting();
             }
         }
 

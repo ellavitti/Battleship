@@ -86,6 +86,78 @@
         .cell.player-cell {
             cursor: default;
         }
+        .cell.player-cell.placement-mode {
+            cursor: pointer;
+        }
+        .cell.preview {
+            background: #2a6db5;
+            opacity: 0.7;
+        }
+        .cell.preview-invalid {
+            background: #e74c3c;
+            opacity: 0.5;
+        }
+        .placement-panel {
+            margin-top: 20px;
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 250px;
+        }
+        .placement-info {
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+        .current-ship {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #0f3460;
+            border-radius: 5px;
+        }
+        .orientation-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .orientation-btn {
+            flex: 1;
+            padding: 10px;
+            background: #0f3460;
+            color: #eee;
+            border: 2px solid #1a4a7a;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .orientation-btn:hover {
+            background: #1a4a7a;
+        }
+        .orientation-btn.active {
+            background: #4a90d9;
+            border-color: #4a90d9;
+        }
+        .random-btn {
+            width: 100%;
+            padding: 12px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .random-btn:hover {
+            background: #219150;
+        }
+        .placement-error {
+            color: #e74c3c;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            min-height: 20px;
+        }
         .status-panel {
             margin-top: 20px;
             background: #16213e;
@@ -155,12 +227,22 @@
         <div class="board-section">
             <div class="board-title">Your Fleet</div>
             <div class="grid" id="playerGrid"></div>
-            <div class="status-panel">
+            <div class="status-panel" id="playerStatusPanel">
                 <div class="status-title">Your Ships</div>
                 <div id="playerShips"></div>
             </div>
+            <div class="placement-panel" id="placementPanel" style="display: none;">
+                <div class="placement-info">Place your ships</div>
+                <div class="current-ship" id="currentShip">Carrier (5)</div>
+                <div class="orientation-toggle">
+                    <button class="orientation-btn active" id="horizontalBtn" onclick="setOrientation('horizontal')">Horizontal</button>
+                    <button class="orientation-btn" id="verticalBtn" onclick="setOrientation('vertical')">Vertical</button>
+                </div>
+                <button class="random-btn" onclick="randomPlacement()">Random Placement</button>
+                <div class="placement-error" id="placementError"></div>
+            </div>
         </div>
-        <div class="board-section">
+        <div class="board-section" id="enemySection" style="display: none;">
             <div class="board-title">Enemy Fleet</div>
             <div class="grid" id="aiGrid"></div>
             <div class="status-panel">
@@ -205,6 +287,10 @@
         let aiShips = [];
         let gameOver = false;
         let playerTurn = true;
+        let gamePhase = 'placement'; // 'placement' or 'battle'
+        let placementOrientation = 'horizontal';
+        let currentShipIndex = 0;
+        let previewCells = [];
 
         // AI Hunt/Target mode
         let huntMode = true;
@@ -221,15 +307,21 @@
             resetAITargeting();
             gameOver = false;
             playerTurn = true;
+            gamePhase = 'placement';
+            placementOrientation = 'horizontal';
+            currentShipIndex = 0;
+            previewCells = [];
 
-            placeShips(playerBoard, playerShips);
             placeShips(aiBoard, aiShips);
 
+            document.getElementById('placementPanel').style.display = 'block';
+            document.getElementById('playerStatusPanel').style.display = 'none';
+            document.getElementById('enemySection').style.display = 'none';
+            document.getElementById('gameStatus').textContent = 'Place your ships to begin!';
+            
+            updateCurrentShipDisplay();
             renderBoard('playerGrid', playerBoard, false);
-            renderBoard('aiGrid', aiBoard, true);
-            renderShipStatus('playerShips', playerShips);
-            renderShipStatus('aiShips', aiShips);
-            document.getElementById('gameStatus').textContent = 'Click on the enemy grid to fire!';
+            updateOrientationButtons();
         }
 
         function createEmptyBoard() {
@@ -265,6 +357,115 @@
                     }
                 }
             });
+        }
+
+        function setOrientation(orientation) {
+            placementOrientation = orientation;
+            updateOrientationButtons();
+            clearPreview();
+        }
+
+        function updateOrientationButtons() {
+            document.getElementById('horizontalBtn').classList.toggle('active', placementOrientation === 'horizontal');
+            document.getElementById('verticalBtn').classList.toggle('active', placementOrientation === 'vertical');
+        }
+
+        function updateCurrentShipDisplay() {
+            if (currentShipIndex < SHIPS.length) {
+                const ship = SHIPS[currentShipIndex];
+                document.getElementById('currentShip').textContent = `${ship.name} (${ship.size})`;
+            } else {
+                document.getElementById('currentShip').textContent = 'All ships placed!';
+            }
+        }
+
+        function randomPlacement() {
+            clearPreview();
+            placeShips(playerBoard, playerShips);
+            currentShipIndex = SHIPS.length;
+            startGame();
+        }
+
+        function handlePlacementClick(row, col) {
+            if (gamePhase !== 'placement') return;
+            
+            clearPreview();
+            
+            const ship = SHIPS[currentShipIndex];
+            const horizontal = placementOrientation === 'horizontal';
+            
+            if (canPlaceShip(playerBoard, row, col, ship.size, horizontal)) {
+                // Place the ship
+                const newShip = {
+                    name: ship.name,
+                    size: ship.size,
+                    cells: [],
+                    sunk: false
+                };
+                
+                for (let i = 0; i < ship.size; i++) {
+                    const r = horizontal ? row : row + i;
+                    const c = horizontal ? col + i : col;
+                    playerBoard[r][c].ship = newShip;
+                    newShip.cells.push({ row: r, col: c });
+                }
+                
+                playerShips.push(newShip);
+                currentShipIndex++;
+                document.getElementById('placementError').textContent = '';
+                
+                if (currentShipIndex >= SHIPS.length) {
+                    startGame();
+                } else {
+                    updateCurrentShipDisplay();
+                    renderBoard('playerGrid', playerBoard, false);
+                }
+            } else {
+                document.getElementById('placementError').textContent = 'Invalid placement: ship would overlap or go out of bounds';
+            }
+        }
+
+        function previewShip(row, col) {
+            clearPreview();
+            
+            if (currentShipIndex >= SHIPS.length) return;
+            
+            const ship = SHIPS[currentShipIndex];
+            const horizontal = placementOrientation === 'horizontal';
+            const valid = canPlaceShip(playerBoard, row, col, ship.size, horizontal);
+            
+            for (let i = 0; i < ship.size; i++) {
+                const r = horizontal ? row : row + i;
+                const c = horizontal ? col + i : col;
+                
+                if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+                    const cell = document.querySelector(`#playerGrid .cell[data-row="${r}"][data-col="${c}"]`);
+                    if (cell) {
+                        cell.classList.add(valid ? 'preview' : 'preview-invalid');
+                        previewCells.push(cell);
+                    }
+                }
+            }
+        }
+
+        function clearPreview() {
+            previewCells.forEach(cell => {
+                cell.classList.remove('preview', 'preview-invalid');
+            });
+            previewCells = [];
+        }
+
+        function startGame() {
+            gamePhase = 'battle';
+            document.getElementById('placementPanel').style.display = 'none';
+            document.getElementById('playerStatusPanel').style.display = 'block';
+            document.getElementById('enemySection').style.display = 'flex';
+            document.getElementById('gameStatus').textContent = 'Click on the enemy grid to fire!';
+            
+            renderBoard('playerGrid', playerBoard, false);
+            renderBoard('aiGrid', aiBoard, true);
+            renderShipStatus('playerShips', playerShips);
+            renderShipStatus('aiShips', aiShips);
         }
 
         function canPlaceShip(board, row, col, size, horizontal) {
@@ -304,6 +505,9 @@
                         }
                     } else {
                         cell.classList.add('player-cell');
+                        if (gamePhase === 'placement') {
+                            cell.classList.add('placement-mode');
+                        }
                         if (cellData.ship) {
                             if (cellData.ship.sunk) {
                                 cell.classList.add('sunk');
@@ -320,8 +524,14 @@
                         }
                     }
                     
-                    if (isAI && !gameOver && playerTurn) {
+                    if (isAI && gamePhase === 'battle' && !gameOver && playerTurn) {
                         cell.addEventListener('click', () => handlePlayerClick(row, col));
+                    }
+                    
+                    if (!isAI && gamePhase === 'placement') {
+                        cell.addEventListener('click', () => handlePlacementClick(row, col));
+                        cell.addEventListener('mouseenter', () => previewShip(row, col));
+                        cell.addEventListener('mouseleave', () => clearPreview());
                     }
                     
                     grid.appendChild(cell);
@@ -341,7 +551,7 @@
         }
 
         function handlePlayerClick(row, col) {
-            if (gameOver || !playerTurn) return;
+            if (gamePhase !== 'battle' || gameOver || !playerTurn) return;
             
             const cell = aiBoard[row][col];
             if (cell.hit) return;

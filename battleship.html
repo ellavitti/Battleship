@@ -41,8 +41,10 @@
             font-weight: 600;
         }
         .grid {
+            --cell-size: 35px;
+            --label-size: 22px;
             display: grid;
-            grid-template-columns: 22px repeat(10, 35px);
+            grid-template-columns: var(--label-size) repeat(10, var(--cell-size));
             gap: 2px;
             background: #16213e;
             padding: 5px;
@@ -57,19 +59,19 @@
             color: #8fa6c4;
         }
         .grid-label.col-label {
-            height: 22px;
+            height: var(--label-size);
         }
         .grid-label.row-label {
-            width: 22px;
-            height: 35px;
+            width: var(--label-size);
+            height: var(--cell-size);
         }
         .grid-corner {
-            width: 22px;
-            height: 22px;
+            width: var(--label-size);
+            height: var(--label-size);
         }
         .cell {
-            width: 35px;
-            height: 35px;
+            width: var(--cell-size);
+            height: var(--cell-size);
             background: #0f3460;
             border: 1px solid #1a1a2e;
             cursor: pointer;
@@ -270,6 +272,52 @@
             width: 20px;
             height: 20px;
             border-radius: 3px;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+            }
+            .game-container {
+                flex-direction: column;
+                gap: 24px;
+                width: 100%;
+                align-items: center;
+            }
+            .board-section {
+                width: 100%;
+                max-width: 420px;
+            }
+            .grid {
+                --cell-size: min(7.5vw, 35px);
+                --label-size: min(4.8vw, 22px);
+            }
+            .grid-label {
+                font-size: min(3vw, 12px);
+            }
+            .placement-panel,
+            .status-panel {
+                min-width: 0;
+                width: 100%;
+                max-width: 420px;
+            }
+            .orientation-btn,
+            .random-btn,
+            .restart-btn {
+                min-height: 44px;
+                font-size: 1rem;
+            }
+            .legend {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px 20px;
+            }
+            .game-status {
+                text-align: center;
+            }
         }
     </style>
 </head>

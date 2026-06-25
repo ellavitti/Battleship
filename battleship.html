@@ -793,8 +793,12 @@
             const allHit = ship.cells.every(c => board[c.row][c.col].hit);
             if (allHit) {
                 ship.sunk = true;
-                // Reset AI targeting to hunt mode when a ship is sunk
-                resetAITargeting();
+                // Only reset AI targeting when the AI sinks one of the player's
+                // ships. Sinking an AI ship is the player's action and must not
+                // wipe the AI's in-progress hunt/target state on the player board.
+                if (board === playerBoard) {
+                    resetAITargeting();
+                }
             }
         }
 

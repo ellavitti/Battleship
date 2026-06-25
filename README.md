@@ -16,4 +16,4 @@
 - Devin Cloud: audited the codebase across three sessions: found bug #4, added coordinate labels (A-J/1-10), added mobile responsiveness, ran 2000 automated simulated games, and submited three PRs
 - Devin Review: automatically reviewed both PRs and independently caught Bug #5 during the PR #2 review
 ##### Bug Documentation
-Full bug report available upon request: covers 5 bugs found and fixed across manual testing and Devin Cloud's audits, and Devin Review's automated PR analysis. 
+[View full bug report](https://docs.google.com/document/d/1ySlPv6Ehm5cagyaRcCt9sVeD1scNnE_Cxe70aNpqaGI/edit?usp=sharing): covers 5 bugs found and fixed across manual testing and Devin Cloud's audits, and Devin Review's automated PR analysis. 

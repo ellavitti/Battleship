@@ -436,6 +436,8 @@
 
         function randomPlacement() {
             clearPreview();
+            playerBoard = createEmptyBoard();
+            playerShips = [];
             placeShips(playerBoard, playerShips);
             currentShipIndex = SHIPS.length;
             startGame();

@@ -66,6 +66,40 @@
         .cell.ship {
             background: #4a90d9;
         }
+        .cell.ship-h-start {
+            background: #4a90d9;
+            border-top: 2px solid #ffffff;
+            border-bottom: 2px solid #ffffff;
+            border-left: 2px solid #ffffff;
+        }
+        .cell.ship-h-middle {
+            background: #4a90d9;
+            border-top: 2px solid #ffffff;
+            border-bottom: 2px solid #ffffff;
+        }
+        .cell.ship-h-end {
+            background: #4a90d9;
+            border-top: 2px solid #ffffff;
+            border-bottom: 2px solid #ffffff;
+            border-right: 2px solid #ffffff;
+        }
+        .cell.ship-v-start {
+            background: #4a90d9;
+            border-top: 2px solid #ffffff;
+            border-left: 2px solid #ffffff;
+            border-right: 2px solid #ffffff;
+        }
+        .cell.ship-v-middle {
+            background: #4a90d9;
+            border-left: 2px solid #ffffff;
+            border-right: 2px solid #ffffff;
+        }
+        .cell.ship-v-end {
+            background: #4a90d9;
+            border-bottom: 2px solid #ffffff;
+            border-left: 2px solid #ffffff;
+            border-right: 2px solid #ffffff;
+        }
         .cell.hit {
             background: #e74c3c;
         }
@@ -326,7 +360,7 @@
 
         function createEmptyBoard() {
             return Array(GRID_SIZE).fill(null).map(() => 
-                Array(GRID_SIZE).fill(null).map(() => ({ hit: false, ship: null }))
+                Array(GRID_SIZE).fill(null).map(() => ({ hit: false, ship: null, shipPosition: null, shipOrientation: null }))
             );
         }
 
@@ -350,6 +384,8 @@
                             const r = horizontal ? row : row + i;
                             const c = horizontal ? col + i : col;
                             board[r][c].ship = ship;
+                            board[r][c].shipPosition = i;
+                            board[r][c].shipOrientation = horizontal ? 'horizontal' : 'vertical';
                             ship.cells.push({ row: r, col: c });
                         }
                         shipsList.push(ship);
@@ -407,6 +443,8 @@
                     const r = horizontal ? row : row + i;
                     const c = horizontal ? col + i : col;
                     playerBoard[r][c].ship = newShip;
+                    playerBoard[r][c].shipPosition = i;
+                    playerBoard[r][c].shipOrientation = horizontal ? 'horizontal' : 'vertical';
                     newShip.cells.push({ row: r, col: c });
                 }
                 
@@ -513,6 +551,24 @@
                                 cell.classList.add('sunk');
                             } else {
                                 cell.classList.add('ship');
+                                // Add ship outline classes based on position and orientation
+                                if (cellData.shipOrientation === 'horizontal') {
+                                    if (cellData.shipPosition === 0) {
+                                        cell.classList.add('ship-h-start');
+                                    } else if (cellData.shipPosition === cellData.ship.size - 1) {
+                                        cell.classList.add('ship-h-end');
+                                    } else {
+                                        cell.classList.add('ship-h-middle');
+                                    }
+                                } else {
+                                    if (cellData.shipPosition === 0) {
+                                        cell.classList.add('ship-v-start');
+                                    } else if (cellData.shipPosition === cellData.ship.size - 1) {
+                                        cell.classList.add('ship-v-end');
+                                    } else {
+                                        cell.classList.add('ship-v-middle');
+                                    }
+                                }
                             }
                         }
                         if (cellData.hit) {

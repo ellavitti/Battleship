@@ -1,6 +1,6 @@
 # Battleship
 ## Play the Game 
-[Click here to play](https://Users/ellavitti/CascadeProjects/battleship.html) 
+[Click here to play](https://ellavitti.github.io/Battleship/battleship.html) 
 ### Features 
 - Ship placement phase: place your fleet manually or use random placement
 - 5 Standard ships: Carrier (5), Battleship (4), Cruiser (3), Submarine (3), Destroyer (2)

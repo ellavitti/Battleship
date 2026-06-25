@@ -13,7 +13,7 @@
 - Fully mobile responsive: grids stack vertically on phones, tested at iPhone width 
 ## Tools Used
 - Devin Desktop: used to build the game and debug Bugs #1-3
-- Devin Cloud: audited the codebase across three sessions: found bug #4, added coordinate labels (A-J/1-10), space themes, animation, sound effects, mobile responsiveness, ran 2000 automated simulated games, and submitted four PRs
-- Devin Review: automatically reviewed all 4 PRs and independently caught Bug #5-8
+- Devin Cloud: audited the codebase across three sessions: found bug #4, added coordinate labels (A-J/1-10), space themes, animation, sound effects, mobile responsiveness, ran 2000 automated simulated games, and submitted 5 PRs
+- Devin Review: automatically reviewed all 5 PRs and independently caught Bug #5-8
 ## Bug Documentation
 [View full bug report](https://docs.google.com/document/d/1ySlPv6Ehm5cagyaRcCt9sVeD1scNnE_Cxe70aNpqaGI/edit?usp=sharing): covers 8 bugs found and fixed across manual testing, Devin Cloud's audits, and Devin Review's automated PR analysis. 

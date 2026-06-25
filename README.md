@@ -12,6 +12,6 @@
 #### Tools Used
 - Devin Desktop: used to build the game and debug
 - Devin Cloud: used to audit the final code, identify an additional bug, run 2000 automated simulated games to verify the fix, and submit a pull request
-- Devin Review: automatically reviewed the pull request submitted by Devin Cloud
+- Devin Review: automatically reviewed both PRs and independently caught Bug #5 during the PR #2 review
 ##### Bug Documentation
-Full bug report available upon request: covers 4 bugs found and fixed across manual testing and Devin Cloud's automated audit
+Full bug report available upon request: covers 5 bugs found and fixed across manual testing and Devin Cloud's audits, and Devin Review's automated PR analysis. 

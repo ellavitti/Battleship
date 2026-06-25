@@ -774,9 +774,12 @@
                         }
                         if (cellData.hit) {
                             if (cellData.ship) {
-                                cell.classList.add('hit');
-                                if (!cellData.ship.sunk) addMark(cell, 'hit');
-                                else addMark(cell, 'sunk');
+                                if (cellData.ship.sunk) {
+                                    addMark(cell, 'sunk');
+                                } else {
+                                    cell.classList.add('hit');
+                                    addMark(cell, 'hit');
+                                }
                             } else {
                                 cell.classList.add('miss');
                                 addMark(cell, 'miss');

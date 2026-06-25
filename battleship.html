@@ -504,6 +504,8 @@
         let placementOrientation = 'horizontal';
         let currentShipIndex = 0;
         let previewCells = [];
+        let aiTurnTimer = null;
+        let endScreenTimer = null;
 
         // AI Hunt/Target mode
         let huntMode = true;
@@ -536,6 +538,8 @@
            GAME SETUP / LOGIC  (unchanged firing & AI behavior)
         ========================================================= */
         function initGame() {
+            clearTimeout(aiTurnTimer);
+            clearTimeout(endScreenTimer);
             playerBoard = createEmptyBoard();
             aiBoard = createEmptyBoard();
             playerShips = [];
@@ -872,11 +876,11 @@
             }
 
             playerTurn = false;
-            setTimeout(aiTurn, 650);
+            aiTurnTimer = setTimeout(aiTurn, 650);
         }
 
         function aiTurn() {
-            if (gameOver) return;
+            if (gameOver || gamePhase !== 'battle') return;
 
             let row, col;
 
@@ -1259,7 +1263,7 @@
                 msg.textContent = 'Your fleet was annihilated. Regroup, Commander.';
                 playDefeat();
             }
-            setTimeout(() => screen.classList.remove('hidden'), 900);
+            endScreenTimer = setTimeout(() => screen.classList.remove('hidden'), 900);
         }
 
         /* =========================================================
